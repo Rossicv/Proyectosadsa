@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alma Quinta</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primario: #b38e5d; 
+            --oscuro: #1a2421;   
+            --blanco: #ffffff;
+            --gris-claro: #f4f4f4;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--gris-claro);
+        }
+
+        /* Barra Lateral */
+        .sidebar {
+            width: 250px;
+            background-color: var(--oscuro);
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar h2 { color: var(--primario); border-bottom: 1px solid #333; padding-bottom: 10px; text-align: center; }
+        .sidebar nav a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 15px;
+            display: block;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: 0.3s;
+        }
+        .sidebar nav a:hover, .sidebar nav a.active { background-color: var(--primario); color: var(--oscuro); font-weight: bold; }
+
+        /* Contenido Principal */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        /* Dashboard Operativo */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Estilo de Tareas Activas (No Reportes) */
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .task-item:last-child { border: none; }
+        .task-item input[type="checkbox"] { margin-right: 15px; accent-color: var(--primario); transform: scale(1.2); }
+
+        /* Recordatorios Rápidos */
+        .reminder-input { display: flex; gap: 10px; margin-bottom: 15px; }
+        .reminder-list { list-style: none; padding: 0; }
+        .reminder-list li { 
+            padding: 10px; 
+            background: #fff8f0; 
+            border-left: 4px solid var(--primario); 
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .btn-primario {
+            background-color: var(--primario);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <h2>ALMA QUINTA</h2>
+        <nav>
+            <a href="#" onclick="showSection('inicio')" class="active" id="nav-inicio">🏠 Inicio</a>
+            <a href="#" onclick="showSection('reportes')" id="nav-reportes">📝 Mis Reportes</a>
+            <a href="#" id="btnLogout" style="margin-top: 50px; color: #ff6b6b;">🚪 Cerrar Sesión</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <div id="bienvenida"></div>
+            <span id="fecha-actual" style="font-weight: bold; color: var(--primario);"></span>
+        </div>
+
+        <div id="section-inicio" class="dashboard-grid">
+            <div class="left-col">
+                <section class="card">
+                    <h3>✅ Tareas para hoy</h3>
+                    <div id="tareas-activas">
+                        <div class="task-item"><input type="checkbox"> Revisar avances de infraestructura AWS</div>
+                        <div class="task-item"><input type="checkbox"> Sincronizar bases de datos RDS</div>
+                        <div class="task-item"><input type="checkbox"> Pruebas de automatización n8n</div>
+                    </div>
+                </section>
+                
+                <section class="card">
+                    <h3>➕ Nueva Actividad</h3>
+                    <form id="reportForm">
+                        <input type="text" id="titulo" placeholder="¿Qué actividad realizarás?" required>
+                        <textarea id="descripcion" rows="2" placeholder="Detalles breves..."></textarea>
+                        <button type="submit" class="btn-primario">Añadir a mi lista</button>
+                    </form>
+                </section>
+            </div>
+
+            <div class="right-col">
+                <section class="card">
+                    <h3>🔔 Recordatorios</h3>
+                    <div class="reminder-input">
+                        <input type="text" id="quick-rem" placeholder="Nota rápida...">
+                        <button onclick="addQuickReminder()" style="background:var(--oscuro); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">+</button>
+                    </div>
+                    <ul class="reminder-list" id="lista-recordatorios">
+                        <li>Llamar a UGEL Sur Arequipa</li>
+                        <li>Backup de seguridad mensual</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+
+        <div id="section-reportes" class="hidden">
+            <section class="card">
+                <h3>Historial de Reportes</h3>
+                <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--primario);">
+                            <th style="padding:10px; text-align:left;">Tarea</th>
+                            <th style="padding:10px; text-align:left;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaTareas"></tbody>
+                </table>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const nombre = localStorage.getItem('usuarioNombre');
+        if (!nombre) { window.location.href = "index.html"; }
+
+        document.getElementById('bienvenida').innerHTML = `<h1 style="margin:0;">Hola, ${nombre} 👋</h1>`;
+        document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Función para cambiar entre Inicio y Reportes
+        function showSection(section) {
+            document.getElementById('section-inicio').classList.add('hidden');
+            document.getElementById('section-reportes').classList.add('hidden');
+            document.getElementById('nav-inicio').classList.remove('active');
+            document.getElementById('nav-reportes').classList.remove('active');
+
+            document.getElementById('section-' + section).classList.remove('hidden');
+            document.getElementById('nav-' + section).classList.add('active');
+        }
+
+        function addQuickReminder() {
+            const input = document.getElementById('quick-rem');
+            if(input.value) {
+                const li = document.createElement('li');
+                li.innerText = input.value;
+                document.getElementById('lista-recordatorios').appendChild(li);
+                input.value = '';
+            }
+        }
+
+        // Tu lógica de carga de datos existente...
+        async function cargarTareas() {
+            try {
+                const response = await fetch(`http://127.0.0.1:3000/obtener-reportes/${nombre}`);
+                const tareas = await response.json();
+                const listaTareas = document.getElementById('listaTareas');
+                listaTareas.innerHTML = ""; 
+                tareas.forEach(tarea => {
+                    listaTareas.innerHTML += `<tr><td style="padding:10px;">${tarea.titulo_tarea}</td><td style="padding:10px;">${tarea.estado}</td></tr>`;
+                });
+            } catch (e) { console.log(e); }
+        }
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = "index.html";
+        });
+
+        cargarTareas();
+    </script>
+</body>
+</html>
